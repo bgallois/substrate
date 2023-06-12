@@ -16,6 +16,7 @@
 // limitations under the License.
 
 //! Implementation of `fungible` traits for Balances pallet.
+use frame_support::runtime_print;
 use super::*;
 use frame_support::traits::tokens::{
 	Fortitude,
@@ -106,7 +107,10 @@ impl<T: Config<I>, I: 'static> fungible::Inspect<T::AccountId> for Pallet<T, I> 
 			return WithdrawConsequence::Success
 		}
 
+		log::info!("totalIssurance {:?} sub by {:?}", TotalIssuance::<T, I>::get(), amount);
 		if TotalIssuance::<T, I>::get().checked_sub(&amount).is_none() {
+			// HERE
+			runtime_print!("totalIssurance {:?} sub by {:?}", TotalIssuance::<T, I>::get(), amount);
 			return WithdrawConsequence::Underflow
 		}
 
@@ -269,7 +273,7 @@ impl<T: Config<I>, I: 'static> fungible::UnbalancedHold<T::AccountId> for Pallet
 		new_account.reserved = if increase {
 			new_account.reserved.checked_add(&delta).ok_or(ArithmeticError::Overflow)?
 		} else {
-			new_account.reserved.checked_sub(&delta).ok_or(ArithmeticError::Underflow)?
+			new_account.reserved.checked_sub(&delta).ok_or(ArithmeticError::Overflow)?
 		};
 
 		let (result, maybe_dust) = Self::try_mutate_account(who, |a, _| -> DispatchResult {
